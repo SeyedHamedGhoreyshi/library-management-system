@@ -16,7 +16,9 @@
     <description>library-management-system</description>
 
     <modules>
-        <module>domian</module>
+        <module>core/domain</module>
+        <module>core/application</module>
+        <module>infrastructure/rest</module>
     </modules>
     <properties>
         <java.version>17</java.version>
