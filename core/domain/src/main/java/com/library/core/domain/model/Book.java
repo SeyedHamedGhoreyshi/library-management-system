@@ -69,7 +69,7 @@ public class Book {
         return new BorrowRecord(this.id, validBorrower, validDate);
     }
 
-    public void returnBook(BorrowRecord borrowRecord, LocalDate returnDate) {
+    public BorrowRecord returnBook(BorrowRecord borrowRecord, LocalDate returnDate) {
         if (isDeleted) {
             throw new InvalidDomainStateException("Cannot perform operations on a deleted book.");
         }
@@ -79,9 +79,8 @@ public class Book {
         if (this.id != null && !this.id.equals(borrowRecord.getBookId())) {
             throw new InvalidDomainStateException("The provided borrow record does not match this book.");
         }
-
-        borrowRecord.markAsReturned(returnDate);
         this.isAvailable = true;
+        return borrowRecord.withReturnDate(returnDate);
     }
 
     public void softDelete(Role actorRole) {
@@ -90,10 +89,14 @@ public class Book {
                     "Only a LIBRARIAN may delete books from the catalog. Actor role: [" + actorRole + "]"
             );
         }
+        if (isDeleted){
+            throw new InvalidDomainStateException("Book is already deleted.");
+        }
         if (!isAvailable) {
             throw new BookIsBorrowedException("Cannot delete a book that is currently borrowed.");
         }
         this.isDeleted = true;
+        this.isAvailable = false;
     }
 
 
@@ -110,7 +113,7 @@ public class Book {
         if (value == null || value.isBlank()) {
             throw new InvalidDomainStateException(fieldName + " must not be null or blank");
         }
-        return value;
+        return value.strip();
     }
 
     private static <T> T requireNonNull(T value, String fieldName) {
@@ -122,11 +125,11 @@ public class Book {
 
     private static String requireValidIsbn(String isbn) {
         requireNotBlank(isbn, "isbn");
-        String stripped = isbn.strip();
-        if (!ISBN_PATTERN.matcher(stripped).matches()) {
+        String normalized = isbn.strip().replace("-","");
+        if (!ISBN_PATTERN.matcher(normalized).matches()) {
             throw new InvalidDomainStateException("ISBN [" + isbn + "] has an invalid format. Expected 10 or 13 digits.");
         }
-        return stripped;
+        return normalized;
     }
 
     private static int requireValidYear(int year) {
@@ -141,7 +144,6 @@ public class Book {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Book book = (Book) o;
-        // اگر شناسه وجود دارد ملاک شناسه است، در غیر این صورت فیلد یکتای بیزینسی (ISBN)
         return id != null ? id.equals(book.id) : isbn.equals(book.isbn);
     }
 
