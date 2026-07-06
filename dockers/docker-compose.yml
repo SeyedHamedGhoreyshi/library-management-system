@@ -1,0 +1,50 @@
+services:
+
+  mysqldb:
+    image: mysql:8.0
+    container_name: library-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${DB_NAME}
+      MYSQL_USER:          ${DB_USERNAME}
+      MYSQL_PASSWORD:      ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_library_data:/var/lib/mysql
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: library-app
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      # Override DB_HOST so the app reaches the mysql container by service name
+      DB_HOST: mysqldb
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    networks:
+      - library-network
+
+networks:
+  library-network:
+    driver: bridge
+
+volumes:
+  mysql_library_data:
+    driver: local
