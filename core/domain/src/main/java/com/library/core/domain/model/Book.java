@@ -20,8 +20,9 @@ public class Book {
     private int publicationYear;
     private boolean isAvailable;
     private boolean isDeleted;
+    private final Long version;
 
-    private Book(Long id, String title, String author, String isbn, int publicationYear, boolean isAvailable, boolean isDeleted) {
+    private Book(Long id, String title, String author, String isbn, int publicationYear, boolean isAvailable, boolean isDeleted, Long version) {
         this.id = id;
         this.title = requireNotBlank(title, "title");
         this.author = requireNotBlank(author, "author");
@@ -29,16 +30,26 @@ public class Book {
         this.publicationYear = requireValidYear(publicationYear);
         this.isAvailable = isAvailable;
         this.isDeleted = isDeleted;
+        this.version = version;
     }
 
     public static Book register(String title, String author, String isbn, int publicationYear) {
-        return new Book(null, title, author, isbn, publicationYear, true, false);
+        return new Book(null, title, author, isbn, publicationYear, true, false, null);
     }
 
     public static Book reconstitute(Long id, String title, String author, String isbn, int publicationYear, boolean isAvailable, boolean isDeleted) {
+        return reconstitute(id, title, author, isbn, publicationYear, isAvailable, isDeleted, null);
+    }
+
+    /**
+     * Reconstitutes a Book together with the persistence version it was loaded with,
+     * so the persistence adapter can carry the originally-read version back on save
+     * and let the database detect concurrent modifications (optimistic locking).
+     */
+    public static Book reconstitute(Long id, String title, String author, String isbn, int publicationYear, boolean isAvailable, boolean isDeleted, Long version) {
         return new Book(
                 requireNonNull(id , "id"),
-                title, author, isbn, publicationYear, isAvailable, isDeleted
+                title, author, isbn, publicationYear, isAvailable, isDeleted, version
         );
     }
 
@@ -107,6 +118,7 @@ public class Book {
     public int getPublicationYear() { return publicationYear; }
     public boolean isAvailable() { return isAvailable; }
     public boolean isDeleted() { return isDeleted; }
+    public Long getVersion() { return version; }
 
 
     private static String requireNotBlank(String value, String fieldName) {
