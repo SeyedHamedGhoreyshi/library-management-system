@@ -1,13 +1,15 @@
 package com.library.core.application.port.input.command;
 
 import com.library.core.application.port.exception.InvalidCommandException;
+import com.library.core.domain.model.Role;
 
 
 public record UpdateBookCommand(
     Long id,
     String title,
     String author,
-    int publicationYear
+    int publicationYear,
+    Role actorRole
 ) {
     private static final int MIN_YEAR = 1000;
     private static final int MAX_YEAR = 2100;
@@ -43,6 +45,9 @@ public record UpdateBookCommand(
                     " and " +
                     MAX_YEAR
             );
+        }
+        if (actorRole == null) {
+            throw new InvalidCommandException("actorRole must not be null");
         }
     }
 }

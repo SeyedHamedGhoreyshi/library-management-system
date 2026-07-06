@@ -24,9 +24,8 @@ public interface BookRepository {
     Optional<Book> findByIsbn(String isbn);
 
     /**
-     * Returns {@code true} if a non-deleted book with the given ISBN already exists.
-     * Used by the application service to enforce catalog-level ISBN uniqueness before
-     * delegating to the domain.
+     * Returns {@code true} if any book (including soft-deleted) with the given ISBN exists.
+     * Used to enforce the database-level unique ISBN constraint before delegating to the domain.
      */
     boolean existsByIsbn(String isbn);
 

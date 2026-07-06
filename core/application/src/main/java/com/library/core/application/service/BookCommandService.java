@@ -2,6 +2,7 @@ package com.library.core.application.service;
 
 import com.library.core.application.port.exception.BookNotFoundException;
 import com.library.core.application.port.exception.DuplicateIsbnException;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.library.core.application.port.input.command.DeleteBookCommand;
 import com.library.core.application.port.input.command.RegisterBookCommand;
 import com.library.core.application.port.input.command.UpdateBookCommand;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class BookCommandService implements RegisterBookUseCase, UpdateBookUseCase, DeleteBookUseCase {
+public class  BookCommandService implements RegisterBookUseCase, UpdateBookUseCase, DeleteBookUseCase {
 
     private final BookRepository bookRepository;
 
@@ -31,7 +32,11 @@ public class BookCommandService implements RegisterBookUseCase, UpdateBookUseCas
             throw new DuplicateIsbnException(command.isbn());
         }
         Book book = Book.register(command.title(), command.author(), command.isbn(), command.publicationYear());
-        return BookResult.from(bookRepository.save(book));
+        try {
+            return BookResult.from(bookRepository.save(book));
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateIsbnException(command.isbn());
+        }
     }
 
     @Override

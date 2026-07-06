@@ -36,6 +36,7 @@ public class BookQueryService implements GetBooksUseCase, GetBookDetailsUseCase 
     @Override
     public BookResult getBookDetails(GetBookDetailsQuery query) {
         return bookRepository.findById(query.bookId())
+                .filter(book -> !book.isDeleted())
                 .map(BookResult::from)
                 .orElseThrow(() -> new BookNotFoundException(query.bookId()));
     }
